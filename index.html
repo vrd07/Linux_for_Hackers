@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Warm Neutral -->
-    <!-- Application Structure Plan: The SPA is structured around the 6-stage penetration testing lifecycle, plus a dedicated section for scripting. This task-oriented design is more intuitive for aspiring pentesters than the book's linear chapter structure. The main navigation is an interactive lifecycle diagram. Clicking a stage dynamically loads relevant tools and concepts, which can be explored further in a detail pane. This promotes contextual learning by showing *when* and *why* a tool is used. -->
-    <!-- Visualization & Content Choices: Report Info: Key Linux commands for hacking. Goal: Organize and contextualize commands. Viz/Method: An interactive HTML/CSS diagram for the main lifecycle navigation. A dynamic HTML content area displays command "cards." Interaction: Clicking a stage filters the commands. Clicking a command shows its purpose, usage, and book chapter reference. Justification: This structure directly maps tools to tasks, enhancing learning retention. Chart.js doughnut chart visualizes the conceptual distribution of tools across the lifecycle, providing a high-level overview. Library/Method: Vanilla JS for interactivity, Chart.js for the visualization. -->
+    <!-- Application Structure Plan: The SPA is structured around the 6-stage penetration testing lifecycle, plus a dedicated section for scripting. This task-oriented design is more intuitive for aspiring pentesters than the book's linear chapter structure. The main navigation is an interactive lifecycle diagram. Clicking a stage dynamically loads relevant tools and concepts, which can be explored further in a detail pane. This promotes contextual learning by showing *when* and *why* a tool is used. Gemini API integration provides on-demand, in-depth explanations for every tool. -->
+    <!-- Visualization & Content Choices: Report Info: Key Linux commands for hacking. Goal: Organize and contextualize commands. Viz/Method: An interactive HTML/CSS diagram for the main lifecycle navigation. A dynamic HTML content area displays command "cards." Interaction: Clicking a stage filters the commands. Clicking a command shows its purpose, usage, and a button to trigger a Gemini API call for a detailed explanation. Justification: This structure directly maps tools to tasks, enhancing learning retention. The AI explainer adds a layer of deep, contextual learning. Library/Method: Vanilla JS for interactivity, Chart.js for the visualization. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
@@ -44,6 +44,34 @@
         .smooth-transition {
             transition: all 0.3s ease-in-out;
         }
+        .gemini-button {
+            background-color: #4F46E5;
+            color: white;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+            border: none;
+        }
+        .gemini-button:hover {
+            background-color: #4338CA;
+        }
+        #gemini-modal {
+            display: none;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #4F46E5;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -58,7 +86,7 @@
             <section id="intro" class="mb-12 bg-white p-6 rounded-lg shadow-sm">
                 <h2 class="text-2xl font-semibold mb-3 text-gray-800">Welcome, Aspiring Hacker</h2>
                 <p class="text-gray-700 leading-relaxed">
-                    This guide transforms the chapters of "Linux Basics for Hackers" into an interactive experience based on the real-world penetration testing lifecycle. Instead of just learning commands, you'll discover *when* and *why* to use them. Click on any stage in the lifecycle below to explore the relevant tools and concepts. This approach helps build a practical, strategic understanding of Linux for offensive security.
+                    This guide transforms the chapters of "Linux Basics for Hackers" into an interactive experience based on the real-world penetration testing lifecycle. Instead of just learning commands, you'll discover *when* and *why* to use them. Click on any stage in the lifecycle below to explore the relevant tools and concepts. Use the "✨ Explain with AI" button to get a detailed explanation of any tool from Gemini.
                 </p>
             </section>
 
@@ -117,75 +145,91 @@
         </footer>
     </div>
 
+    <!-- Gemini Modal -->
+    <div id="gemini-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 id="gemini-modal-title" class="text-xl font-bold">✨ Gemini Explains</h3>
+                <button id="gemini-modal-close" class="text-2xl font-bold">&times;</button>
+            </div>
+            <div id="gemini-modal-content" class="p-6 overflow-y-auto">
+                <div id="gemini-spinner" class="flex justify-center items-center h-48">
+                    <div class="spinner"></div>
+                </div>
+                <div id="gemini-response" class="prose max-w-none"></div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const contentData = {
             foundations: {
                 title: "Foundations: Core Command-Line Mastery",
                 description: "Before you can hack, you must master the environment. These are the non-negotiable, fundamental skills for system interaction, navigation, and control. Proficiency here is the bedrock of every successful operation.",
                 tools: [
-                    { name: "Navigation", command: "pwd, whoami, cd, ls", details: "Essential for situational awareness. Know where you are, who you are, and what's around you.", chapter: "1" },
-                    { name: "Finding Things", command: "locate, find, grep", details: "Crucial for locating files and parsing text. `find` is for granular searches, while `grep` is the universal filter for any text output.", chapter: "1, 2" },
-                    { name: "Text Manipulation", command: "cat, head, tail, less, sed", details: "In Linux, everything is a file. Being able to read and manipulate text files is a form of intelligence gathering.", chapter: "2" },
-                    { name: "Process Control", command: "ps, top, kill, &", details: "Understand and control what's running on a system. Identify legitimate services, find malicious processes, and manage your own tools.", chapter: "4" },
-                    { name: "Permissions", command: "chmod, chown, chgrp", details: "Permissions are a core security model. Understand them to make your exploits executable and to lock down your own tools on a compromised host.", chapter: "5" },
-                    { name: "Software Management", command: "apt, git", details: "Your toolkit is dynamic. Use `apt` for standard tools and `git` to acquire the latest exploits and scripts from repositories like GitHub.", chapter: "7" }
+                    { name: "Navigation", command: "pwd, whoami, cd, ls", details: "Essential for situational awareness. Know where you are, who you are, and what's around you.", chapter: "1", prompt: "Explain the fundamental Linux navigation commands (pwd, whoami, cd, ls) for a beginner hacker. Describe what each command does and why it's critical for situational awareness on a target system." },
+                    { name: "Finding Things", command: "locate, find, grep", details: "Crucial for locating files and parsing text. `find` is for granular searches, while `grep` is the universal filter for any text output.", chapter: "1, 2", prompt: "Compare and contrast the 'locate', 'find', and 'grep' commands from a pentester's perspective. Explain the ideal use case for each, such as when to use 'find' for privilege escalation vs. 'grep' for finding passwords in files." },
+                    { name: "Text Manipulation", command: "cat, head, tail, less, sed", details: "In Linux, everything is a file. Being able to read and manipulate text files is a form of intelligence gathering.", chapter: "2", prompt: "Describe the role of text manipulation in hacking. Explain the specific use cases for 'cat', 'head', 'tail', 'less', and 'sed' when analyzing log files or configuration files on a compromised machine." },
+                    { name: "Process Control", command: "ps, top, kill, &", details: "Understand and control what's running on a system. Identify legitimate services, find malicious processes, and manage your own tools.", chapter: "4", prompt: "Explain process management for hackers using 'ps', 'top', and 'kill'. Describe how a pentester would use these commands to identify and terminate a target's security software or hide their own malicious processes." },
+                    { name: "Permissions", command: "chmod, chown, chgrp", details: "Permissions are a core security model. Understand them to make your exploits executable and to lock down your own tools on a compromised host.", chapter: "5", prompt: "Explain the Linux permissions model (read, write, execute) from an attacker's point of view. Describe how 'chmod' is used to make an exploit executable and why understanding 'chown' is important after gaining root access." },
+                    { name: "Software Management", command: "apt, git", details: "Your toolkit is dynamic. Use `apt` for standard tools and `git` to acquire the latest exploits and scripts from repositories like GitHub.", chapter: "7", prompt: "Explain why software management with 'apt' and 'git' is a critical skill for hackers. Contrast the two, explaining when to use 'apt' for stable tools versus 'git clone' for accessing cutting-edge exploits from GitHub." }
                 ]
             },
             recon: {
                 title: "Reconnaissance: Passive Intelligence Gathering",
                 description: "The first phase of any attack. The goal is to gather as much information as possible about the target without actively connecting to their systems, minimizing the risk of detection.",
                 tools: [
-                    { name: "Wired Network Info", command: "ifconfig", details: "Identifies your own network configuration and IP address, a starting point for understanding the local network.", chapter: "3" },
-                    { name: "DNS Enumeration", command: "dig", details: "Queries Domain Name System servers to find a target's IP addresses, mail servers (MX), and name servers (NS), mapping their internet footprint.", chapter: "3" },
-                    { name: "Wireless Monitor Mode", command: "airmon-ng", details: "Puts your wireless card into a passive 'monitor mode', allowing it to capture all nearby Wi-Fi traffic, not just traffic addressed to you.", chapter: "14" },
-                    { name: "Discovering Networks", command: "airodump-ng", details: "Passively listens for and displays all nearby Wi-Fi access points and connected clients, identifying potential targets and their security protocols.", chapter: "14" }
+                    { name: "Wired Network Info", command: "ifconfig", details: "Identifies your own network configuration and IP address, a starting point for understanding the local network.", chapter: "3", prompt: "Explain the 'ifconfig' command in the context of the reconnaissance phase. Describe what information it provides and how a pentester uses this to map their own position before attacking a target network." },
+                    { name: "DNS Enumeration", command: "dig", details: "Queries Domain Name System servers to find a target's IP addresses, mail servers (MX), and name servers (NS), mapping their internet footprint.", chapter: "3", prompt: "Explain DNS enumeration using the 'dig' command. Describe what MX and NS records are and how gathering this information helps a hacker map out a corporation's external infrastructure without sending any direct traffic to their web server." },
+                    { name: "Wireless Monitor Mode", command: "airmon-ng", details: "Puts your wireless card into a passive 'monitor mode', allowing it to capture all nearby Wi-Fi traffic, not just traffic addressed to you.", chapter: "14", prompt: "What is Wi-Fi 'monitor mode' and why is it essential for wireless hacking? Explain the role of the 'airmon-ng' command in enabling this mode on a wireless network card." },
+                    { name: "Discovering Networks", command: "airodump-ng", details: "Passively listens for and displays all nearby Wi-Fi access points and connected clients, identifying potential targets and their security protocols.", chapter: "14", prompt: "Explain how 'airodump-ng' works as a passive reconnaissance tool. Describe the key information it reveals about nearby wireless networks and how a hacker uses this data to select a target." }
                 ]
             },
             scanning: {
                 title: "Scanning: Active Probing",
                 description: "Now you actively probe the target's systems to identify open ports, running services, and software versions. This information is critical for finding exploitable vulnerabilities.",
                 tools: [
-                    { name: "Port Scanning", command: "nmap", details: "The quintessential network mapper. Used to discover hosts and services on a computer network by sending packets and analyzing the responses.", chapter: "8" },
-                    { name: "Bash Port Scanner", command: "Custom Script", details: "The book teaches how to build a simple Bash script using `nmap` to automate scanning a network for a specific open port.", chapter: "8" },
-                    { name: "Python Banner Grabber", command: "Custom Script", details: "A custom Python script that connects to an open port to 'grab' the banner, which often reveals the exact software and version running.", chapter: "17" }
+                    { name: "Port Scanning", command: "nmap", details: "The quintessential network mapper. Used to discover hosts and services on a computer network by sending packets and analyzing the responses.", chapter: "8", prompt: "Describe the role of 'nmap' as the world's most famous port scanner. Explain the difference between passive recon and active scanning, and describe what information a basic 'nmap' scan provides to an attacker." },
+                    { name: "Bash Port Scanner", command: "Custom Script", details: "The book teaches how to build a simple Bash script using `nmap` to automate scanning a network for a specific open port.", chapter: "8", prompt: "Explain the value of creating a custom Bash script for port scanning. Why would a hacker write their own script instead of just using the 'nmap' command directly? Describe the core components of such a script." },
+                    { name: "Python Banner Grabber", command: "Custom Script", details: "A custom Python script that connects to an open port to 'grab' the banner, which often reveals the exact software and version running.", chapter: "17", prompt: "What is 'banner grabbing' and why is it a critical step in the scanning phase? Explain how a custom Python script using the 'socket' library can be used to connect to an open port and retrieve the service banner." }
                 ]
             },
             access: {
                 title: "Gaining Access: Exploitation & Privilege Escalation",
                 description: "This is where you breach the target's defenses. Using information from previous stages, you exploit vulnerabilities to gain initial access and then escalate privileges to gain full control.",
                 tools: [
-                    { name: "SUID/SGID Exploits", command: "find / -perm -u=s", details: "A primary method for privilege escalation. Find programs that run with root privileges and exploit them to execute commands as root.", chapter: "5" },
-                    { name: "Service Abuse (MySQL)", command: "mysql -u root -p", details: "Many systems are compromised via misconfigured services. Gaining access to a database can lead to massive data exfiltration.", chapter: "12" },
-                    { name: "Remote Control (SSH)", command: "ssh user@host", details: "The Secure Shell is a primary tool for controlling a compromised machine remotely and securely.", chapter: "12" },
-                    { name: "Password Cracking", command: "Python FTP Cracker", details: "A custom Python script that automates brute-force or dictionary attacks against login services like FTP.", chapter: "17" },
-                    { name: "Kernel-Level Rootkits", command: "LKM Abuse", details: "An advanced technique involving Loadable Kernel Modules (LKMs) to gain stealthy, persistent, and total control over a system.", chapter: "15" }
+                    { name: "SUID/SGID Exploits", command: "find / -perm -u=s", details: "A primary method for privilege escalation. Find programs that run with root privileges and exploit them to execute commands as root.", chapter: "5", prompt: "Explain SUID/SGID exploits as a privilege escalation vector. Describe what an SUID bit is, why it's dangerous, and how the command 'find / -perm -u=s' helps a hacker find these vulnerable files on a compromised system." },
+                    { name: "Service Abuse (MySQL)", command: "mysql -u root -p", details: "Many systems are compromised via misconfigured services. Gaining access to a database can lead to massive data exfiltration.", chapter: "12", prompt: "Explain how misconfigured services like MySQL can be abused to gain access. Describe the potential impact of an attacker gaining access to a company's database with a weak or default root password." },
+                    { name: "Remote Control (SSH)", command: "ssh user@host", details: "The Secure Shell is a primary tool for controlling a compromised machine remotely and securely.", chapter: "12", prompt: "Describe the role of SSH in the 'gaining access' phase. Explain how it's used for remote control after an attacker has obtained valid credentials through other means like phishing or password cracking." },
+                    { name: "Password Cracking", command: "Python FTP Cracker", details: "A custom Python script that automates brute-force or dictionary attacks against login services like FTP.", chapter: "17", prompt: "Explain the concept of a dictionary attack. Describe how the custom Python FTP cracker from the book works, focusing on its use of a wordlist and exception handling to test thousands of passwords without crashing." },
+                    { name: "Kernel-Level Rootkits", command: "LKM Abuse", details: "An advanced technique involving Loadable Kernel Modules (LKMs) to gain stealthy, persistent, and total control over a system.", chapter: "15", prompt: "What is a Loadable Kernel Module (LKM) rootkit? Explain how this advanced technique differs from user-level exploits and why gaining kernel-level access provides the ultimate form of stealth and control over a target system." }
                 ]
             },
             persistence: {
                 title: "Maintaining Access: Establishing Persistence",
                 description: "Once you're in, you need to ensure you can get back in later. Persistence techniques create backdoors that survive reboots and allow for long-term access.",
                 tools: [
-                    { name: "Scheduled Tasks", command: "cron, crontab", details: "The `cron` daemon is a pentester's best friend for persistence. Schedule a reverse shell script to run at regular intervals to call back to your machine.", chapter: "16" },
-                    { name: "Startup Scripts", command: "rc.d, update-rc.d", details: "A more robust method. Place a malicious script in the system's startup directories to ensure it executes every time the machine boots.", chapter: "16" }
+                    { name: "Scheduled Tasks", command: "cron, crontab", details: "The `cron` daemon is a pentester's best friend for persistence. Schedule a reverse shell script to run at regular intervals to call back to your machine.", chapter: "16", prompt: "Explain how the 'cron' utility is used by hackers to maintain persistence. Describe what a 'reverse shell' is and how scheduling one with 'crontab' ensures an attacker can regain access to a system even after a reboot." },
+                    { name: "Startup Scripts", command: "rc.d, update-rc.d", details: "A more robust method. Place a malicious script in the system's startup directories to ensure it executes every time the machine boots.", chapter: "16", prompt: "Explain how Linux startup scripts in directories like '/etc/init.d/' can be abused for persistence. Compare this method to using 'cron' and explain why it might be considered more robust or stealthy." }
                 ]
             },
             tracks: {
                 title: "Covering Tracks & Anonymity",
                 description: "The final phase. A professional removes evidence of their intrusion and uses tools to obfuscate their identity and location, protecting their operational security (OpSec).",
                 tools: [
-                    { name: "Secure Deletion", command: "shred", details: "Unlike `rm`, `shred` securely overwrites a file's data multiple times, making forensic recovery nearly impossible.", chapter: "11" },
-                    { name: "Disabling Logs", command: "service rsyslog stop", details: "A brute-force method to stop the system from recording any new activity. Fast, but can be a red flag to administrators.", chapter: "11" },
-                    { name: "Anonymity Networks", command: "Tor, proxychains", details: "Route your traffic through multiple encrypted relays (Tor) or a chain of proxies (`proxychains`) to make it extremely difficult to trace an attack back to you.", chapter: "13" },
-                    { name: "Encryption", command: "VPN", details: "A Virtual Private Network encrypts your traffic and masks your source IP address from your ISP and the target.", chapter: "13" }
+                    { name: "Secure Deletion", command: "shred", details: "Unlike `rm`, `shred` securely overwrites a file's data multiple times, making forensic recovery nearly impossible.", chapter: "11", prompt: "Compare the 'rm' and 'shred' commands. Explain why a hacker must use 'shred' to cover their tracks and why simply deleting a log file with 'rm' is not enough to defeat digital forensics." },
+                    { name: "Disabling Logs", command: "service rsyslog stop", details: "A brute-force method to stop the system from recording any new activity. Fast, but can be a red flag to administrators.", chapter: "11", prompt: "Explain the attacker's dilemma when it comes to log files. Describe the pros and cons of stopping the 'rsyslog' service versus shredding individual log entries. Which is stealthier and why?" },
+                    { name: "Anonymity Networks", command: "Tor, proxychains", details: "Route your traffic through multiple encrypted relays (Tor) or a chain of proxies (`proxychains`) to make it extremely difficult to trace an attack back to you.", chapter: "13", prompt: "Explain the difference between Tor and using 'proxychains'. Describe how these tools help a hacker achieve anonymity and protect their operational security (OpSec)." },
+                    { name: "Encryption", command: "VPN", details: "A Virtual Private Network encrypts your traffic and masks your source IP address from your ISP and the target.", chapter: "13", prompt: "What is a VPN and what is its primary role in a hacker's toolkit? Explain how it provides a foundational layer of security and anonymity before more advanced tools like Tor are used." }
                 ]
             },
             scripting: {
                 title: "Scripting: The Force Multiplier",
                 description: "The difference between a novice and a professional is the ability to create custom tools. Scripting allows you to automate tasks, modify exploits, and build bespoke tools that evade detection.",
                 tools: [
-                    { name: "Bash Automation", command: "Shell Scripting", details: "Bash is the 'glue' of Linux. Use it to chain existing command-line tools into a single, automated workflow, transforming manual steps into a powerful script.", chapter: "8" },
-                    { name: "Python Tool Creation", command: "Python Scripting", details: "Python is the language of choice for building standalone hacking tools. Its clean syntax and vast libraries make it perfect for network tools, crackers, and more.", chapter: "17" },
-                    { name: "Key Python Libraries", command: "socket, ftplib", details: "The book introduces powerful libraries like `socket` for raw network communication and `ftplib` for interacting with specific protocols like FTP.", chapter: "17" }
+                    { name: "Bash Automation", command: "Shell Scripting", details: "Bash is the 'glue' of Linux. Use it to chain existing command-line tools into a single, automated workflow, transforming manual steps into a powerful script.", chapter: "8", prompt: "Explain why Bash scripting is called the 'glue' of Linux hacking. Describe its primary purpose: to automate sequences of other command-line tools, using the MySQL scanner script from the book as an example." },
+                    { name: "Python Tool Creation", command: "Python Scripting", details: "Python is the language of choice for building standalone hacking tools. Its clean syntax and vast libraries make it perfect for network tools, crackers, and more.", chapter: "17", prompt: "Explain why Python is the preferred language for building custom hacking tools from scratch. Contrast its purpose with Bash scripting, highlighting Python's strengths in creating complex, standalone applications." },
+                    { name: "Key Python Libraries", command: "socket, ftplib", details: "The book introduces powerful libraries like `socket` for raw network communication and `ftplib` for interacting with specific protocols like FTP.", chapter: "17", prompt: "Describe the role of Python libraries in accelerating tool development. Explain what the 'socket' library allows a developer to do, and how specialized libraries like 'ftplib' make it easy to interact with specific network protocols." }
                 ]
             }
         };
@@ -236,9 +280,12 @@
             toolDetailsEl.innerHTML = `
                 <h4 class="font-bold text-xl mb-2 text-gray-900">${toolData.name}</h4>
                 <p class="text-gray-800 mb-4">${toolData.details}</p>
-                <div class="flex justify-between items-center">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <p class="font-mono text-sm bg-white p-3 rounded-md shadow-sm">${toolData.command}</p>
                     <span class="font-semibold text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-full">Chapter: ${toolData.chapter}</span>
+                </div>
+                <div class="mt-6 text-center">
+                    <button class="gemini-button" data-prompt="${toolData.prompt}">✨ Explain with AI</button>
                 </div>
             `;
 
@@ -247,6 +294,11 @@
             }
             card.classList.add('active');
             activeToolCard = card;
+
+            document.querySelector('#tool-details .gemini-button').addEventListener('click', (e) => {
+                const prompt = e.currentTarget.dataset.prompt;
+                callGemini(prompt);
+            });
         }
 
         navItems.forEach(item => {
@@ -317,6 +369,69 @@
                 }
             });
         }
+
+        // Gemini API Integration
+        const geminiModal = document.getElementById('gemini-modal');
+        const geminiModalClose = document.getElementById('gemini-modal-close');
+        const geminiSpinner = document.getElementById('gemini-spinner');
+        const geminiResponseEl = document.getElementById('gemini-response');
+
+        async function callGemini(prompt) {
+            geminiResponseEl.innerHTML = '';
+            geminiSpinner.style.display = 'flex';
+            geminiModal.style.display = 'flex';
+
+            const apiKey = ""; // API key will be injected by the environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{
+                    parts: [{ text: prompt }]
+                }]
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    let html = text
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        .replace(/`(.*?)`/g, '<code class="bg-gray-200 text-sm p-1 rounded">$1</code>')
+                        .replace(/\n/g, '<br>');
+                    geminiResponseEl.innerHTML = html;
+                } else {
+                    geminiResponseEl.textContent = 'Sorry, I could not generate a response. Please try again.';
+                }
+
+            } catch (error) {
+                console.error("Gemini API call failed:", error);
+                geminiResponseEl.textContent = 'An error occurred while fetching the explanation. Please check the console for details.';
+            } finally {
+                geminiSpinner.style.display = 'none';
+            }
+        }
+
+        geminiModalClose.addEventListener('click', () => {
+            geminiModal.style.display = 'none';
+        });
+
+        geminiModal.addEventListener('click', (event) => {
+            if (event.target === geminiModal) {
+                geminiModal.style.display = 'none';
+            }
+        });
 
         window.addEventListener('DOMContentLoaded', () => {
             displayStageContent('foundations');
