@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Guide to Linux for Hackers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutral -->
+    <!-- Application Structure Plan: The SPA is structured around the 6-stage penetration testing lifecycle, plus a dedicated section for scripting. This task-oriented design is more intuitive for aspiring pentesters than the book's linear chapter structure. The main navigation is an interactive lifecycle diagram. Clicking a stage dynamically loads relevant tools and concepts, which can be explored further in a detail pane. This promotes contextual learning by showing *when* and *why* a tool is used. -->
+    <!-- Visualization & Content Choices: Report Info: Key Linux commands for hacking. Goal: Organize and contextualize commands. Viz/Method: An interactive HTML/CSS diagram for the main lifecycle navigation. A dynamic HTML content area displays command "cards." Interaction: Clicking a stage filters the commands. Clicking a command shows its purpose, usage, and book chapter reference. Justification: This structure directly maps tools to tasks, enhancing learning retention. Chart.js doughnut chart visualizes the conceptual distribution of tools across the lifecycle, providing a high-level overview. Library/Method: Vanilla JS for interactivity, Chart.js for the visualization. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-item.active {
+            background-color: #D1D5DB;
+            color: #111827;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .tool-card.active {
+            border-color: #6B7280;
+            background-color: #F3F4F6;
+        }
+        .smooth-transition {
+            transition: all 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-5xl font-bold text-gray-900">A Pentester's Guide to Linux</h1>
+            <p class="text-lg md:text-xl text-gray-600 mt-2">An Interactive Summary of "Linux Basics for Hackers"</p>
+        </header>
+
+        <main>
+            <section id="intro" class="mb-12 bg-white p-6 rounded-lg shadow-sm">
+                <h2 class="text-2xl font-semibold mb-3 text-gray-800">Welcome, Aspiring Hacker</h2>
+                <p class="text-gray-700 leading-relaxed">
+                    This guide transforms the chapters of "Linux Basics for Hackers" into an interactive experience based on the real-world penetration testing lifecycle. Instead of just learning commands, you'll discover *when* and *why* to use them. Click on any stage in the lifecycle below to explore the relevant tools and concepts. This approach helps build a practical, strategic understanding of Linux for offensive security.
+                </p>
+            </section>
+
+            <section id="lifecycle-nav" class="mb-12">
+                <h2 class="text-2xl font-semibold text-center mb-6 text-gray-800">The Penetration Testing Lifecycle</h2>
+                <nav class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 text-center">
+                    <button data-stage="foundations" class="nav-item p-4 bg-white rounded-lg shadow-sm hover:bg-gray-100 smooth-transition focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        <span class="text-3xl">⚙️</span>
+                        <span class="block mt-2 font-semibold">Foundations</span>
+                    </button>
+                    <button data-stage="recon" class="nav-item p-4 bg-white rounded-lg shadow-sm hover:bg-gray-100 smooth-transition focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        <span class="text-3xl">🔍</span>
+                        <span class="block mt-2 font-semibold">Reconnaissance</span>
+                    </button>
+                    <button data-stage="scanning" class="nav-item p-4 bg-white rounded-lg shadow-sm hover:bg-gray-100 smooth-transition focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        <span class="text-3xl">🎯</span>
+                        <span class="block mt-2 font-semibold">Scanning</span>
+                    </button>
+                    <button data-stage="access" class="nav-item p-4 bg-white rounded-lg shadow-sm hover:bg-gray-100 smooth-transition focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        <span class="text-3xl">🔑</span>
+                        <span class="block mt-2 font-semibold">Gaining Access</span>
+                    </button>
+                    <button data-stage="persistence" class="nav-item p-4 bg-white rounded-lg shadow-sm hover:bg-gray-100 smooth-transition focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        <span class="text-3xl">🔄</span>
+                        <span class="block mt-2 font-semibold">Maintaining Access</span>
+                    </button>
+                    <button data-stage="tracks" class="nav-item p-4 bg-white rounded-lg shadow-sm hover:bg-gray-100 smooth-transition focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        <span class="text-3xl">👣</span>
+                        <span class="block mt-2 font-semibold">Covering Tracks</span>
+                    </button>
+                    <button data-stage="scripting" class="nav-item p-4 bg-white rounded-lg shadow-sm hover:bg-gray-100 smooth-transition focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        <span class="text-3xl">📜</span>
+                        <span class="block mt-2 font-semibold">Scripting</span>
+                    </button>
+                </nav>
+            </section>
+
+            <section id="content-display" class="bg-white p-6 rounded-lg shadow-sm min-h-[400px]">
+                <div id="stage-content" class="smooth-transition">
+                    <!-- Dynamic content will be injected here -->
+                </div>
+            </section>
+            
+            <section id="visualization" class="mt-12 bg-white p-6 rounded-lg shadow-sm">
+                <h2 class="text-2xl font-semibold text-center mb-6 text-gray-800">Pentesting Toolkit Distribution</h2>
+                <p class="text-center text-gray-600 mb-6">This chart provides a conceptual overview of how tools and techniques are distributed across the different phases of a penetration test, based on the content in the book.</p>
+                <div class="chart-container">
+                    <canvas id="toolkit-chart"></canvas>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="text-center mt-12 py-4 border-t border-gray-200">
+            <p class="text-gray-500">Interactive guide based on "Linux Basics for Hackers" by OccupyTheWeb.</p>
+        </footer>
+    </div>
+
+    <script>
+        const contentData = {
+            foundations: {
+                title: "Foundations: Core Command-Line Mastery",
+                description: "Before you can hack, you must master the environment. These are the non-negotiable, fundamental skills for system interaction, navigation, and control. Proficiency here is the bedrock of every successful operation.",
+                tools: [
+                    { name: "Navigation", command: "pwd, whoami, cd, ls", details: "Essential for situational awareness. Know where you are, who you are, and what's around you.", chapter: "1" },
+                    { name: "Finding Things", command: "locate, find, grep", details: "Crucial for locating files and parsing text. `find` is for granular searches, while `grep` is the universal filter for any text output.", chapter: "1, 2" },
+                    { name: "Text Manipulation", command: "cat, head, tail, less, sed", details: "In Linux, everything is a file. Being able to read and manipulate text files is a form of intelligence gathering.", chapter: "2" },
+                    { name: "Process Control", command: "ps, top, kill, &", details: "Understand and control what's running on a system. Identify legitimate services, find malicious processes, and manage your own tools.", chapter: "4" },
+                    { name: "Permissions", command: "chmod, chown, chgrp", details: "Permissions are a core security model. Understand them to make your exploits executable and to lock down your own tools on a compromised host.", chapter: "5" },
+                    { name: "Software Management", command: "apt, git", details: "Your toolkit is dynamic. Use `apt` for standard tools and `git` to acquire the latest exploits and scripts from repositories like GitHub.", chapter: "7" }
+                ]
+            },
+            recon: {
+                title: "Reconnaissance: Passive Intelligence Gathering",
+                description: "The first phase of any attack. The goal is to gather as much information as possible about the target without actively connecting to their systems, minimizing the risk of detection.",
+                tools: [
+                    { name: "Wired Network Info", command: "ifconfig", details: "Identifies your own network configuration and IP address, a starting point for understanding the local network.", chapter: "3" },
+                    { name: "DNS Enumeration", command: "dig", details: "Queries Domain Name System servers to find a target's IP addresses, mail servers (MX), and name servers (NS), mapping their internet footprint.", chapter: "3" },
+                    { name: "Wireless Monitor Mode", command: "airmon-ng", details: "Puts your wireless card into a passive 'monitor mode', allowing it to capture all nearby Wi-Fi traffic, not just traffic addressed to you.", chapter: "14" },
+                    { name: "Discovering Networks", command: "airodump-ng", details: "Passively listens for and displays all nearby Wi-Fi access points and connected clients, identifying potential targets and their security protocols.", chapter: "14" }
+                ]
+            },
+            scanning: {
+                title: "Scanning: Active Probing",
+                description: "Now you actively probe the target's systems to identify open ports, running services, and software versions. This information is critical for finding exploitable vulnerabilities.",
+                tools: [
+                    { name: "Port Scanning", command: "nmap", details: "The quintessential network mapper. Used to discover hosts and services on a computer network by sending packets and analyzing the responses.", chapter: "8" },
+                    { name: "Bash Port Scanner", command: "Custom Script", details: "The book teaches how to build a simple Bash script using `nmap` to automate scanning a network for a specific open port.", chapter: "8" },
+                    { name: "Python Banner Grabber", command: "Custom Script", details: "A custom Python script that connects to an open port to 'grab' the banner, which often reveals the exact software and version running.", chapter: "17" }
+                ]
+            },
+            access: {
+                title: "Gaining Access: Exploitation & Privilege Escalation",
+                description: "This is where you breach the target's defenses. Using information from previous stages, you exploit vulnerabilities to gain initial access and then escalate privileges to gain full control.",
+                tools: [
+                    { name: "SUID/SGID Exploits", command: "find / -perm -u=s", details: "A primary method for privilege escalation. Find programs that run with root privileges and exploit them to execute commands as root.", chapter: "5" },
+                    { name: "Service Abuse (MySQL)", command: "mysql -u root -p", details: "Many systems are compromised via misconfigured services. Gaining access to a database can lead to massive data exfiltration.", chapter: "12" },
+                    { name: "Remote Control (SSH)", command: "ssh user@host", details: "The Secure Shell is a primary tool for controlling a compromised machine remotely and securely.", chapter: "12" },
+                    { name: "Password Cracking", command: "Python FTP Cracker", details: "A custom Python script that automates brute-force or dictionary attacks against login services like FTP.", chapter: "17" },
+                    { name: "Kernel-Level Rootkits", command: "LKM Abuse", details: "An advanced technique involving Loadable Kernel Modules (LKMs) to gain stealthy, persistent, and total control over a system.", chapter: "15" }
+                ]
+            },
+            persistence: {
+                title: "Maintaining Access: Establishing Persistence",
+                description: "Once you're in, you need to ensure you can get back in later. Persistence techniques create backdoors that survive reboots and allow for long-term access.",
+                tools: [
+                    { name: "Scheduled Tasks", command: "cron, crontab", details: "The `cron` daemon is a pentester's best friend for persistence. Schedule a reverse shell script to run at regular intervals to call back to your machine.", chapter: "16" },
+                    { name: "Startup Scripts", command: "rc.d, update-rc.d", details: "A more robust method. Place a malicious script in the system's startup directories to ensure it executes every time the machine boots.", chapter: "16" }
+                ]
+            },
+            tracks: {
+                title: "Covering Tracks & Anonymity",
+                description: "The final phase. A professional removes evidence of their intrusion and uses tools to obfuscate their identity and location, protecting their operational security (OpSec).",
+                tools: [
+                    { name: "Secure Deletion", command: "shred", details: "Unlike `rm`, `shred` securely overwrites a file's data multiple times, making forensic recovery nearly impossible.", chapter: "11" },
+                    { name: "Disabling Logs", command: "service rsyslog stop", details: "A brute-force method to stop the system from recording any new activity. Fast, but can be a red flag to administrators.", chapter: "11" },
+                    { name: "Anonymity Networks", command: "Tor, proxychains", details: "Route your traffic through multiple encrypted relays (Tor) or a chain of proxies (`proxychains`) to make it extremely difficult to trace an attack back to you.", chapter: "13" },
+                    { name: "Encryption", command: "VPN", details: "A Virtual Private Network encrypts your traffic and masks your source IP address from your ISP and the target.", chapter: "13" }
+                ]
+            },
+            scripting: {
+                title: "Scripting: The Force Multiplier",
+                description: "The difference between a novice and a professional is the ability to create custom tools. Scripting allows you to automate tasks, modify exploits, and build bespoke tools that evade detection.",
+                tools: [
+                    { name: "Bash Automation", command: "Shell Scripting", details: "Bash is the 'glue' of Linux. Use it to chain existing command-line tools into a single, automated workflow, transforming manual steps into a powerful script.", chapter: "8" },
+                    { name: "Python Tool Creation", command: "Python Scripting", details: "Python is the language of choice for building standalone hacking tools. Its clean syntax and vast libraries make it perfect for network tools, crackers, and more.", chapter: "17" },
+                    { name: "Key Python Libraries", command: "socket, ftplib", details: "The book introduces powerful libraries like `socket` for raw network communication and `ftplib` for interacting with specific protocols like FTP.", chapter: "17" }
+                ]
+            }
+        };
+
+        const stageContentEl = document.getElementById('stage-content');
+        const navItems = document.querySelectorAll('.nav-item');
+        let activeToolCard = null;
+
+        function displayStageContent(stageKey) {
+            const stageData = contentData[stageKey];
+            if (!stageData) {
+                stageContentEl.innerHTML = `<p class="text-center text-gray-500">Select a stage to begin.</p>`;
+                return;
+            }
+
+            let toolsHtml = stageData.tools.map((tool, index) => `
+                <div class="tool-card border-2 border-transparent rounded-lg p-4 cursor-pointer hover:bg-gray-100 smooth-transition" data-stage="${stageKey}" data-tool-index="${index}">
+                    <h4 class="font-semibold text-lg">${tool.name}</h4>
+                    <p class="text-sm text-gray-600 font-mono bg-gray-100 p-2 rounded mt-2">${tool.command}</p>
+                </div>
+            `).join('');
+
+            stageContentEl.innerHTML = `
+                <div id="stage-detail" class="mb-8">
+                    <h3 class="text-2xl font-bold mb-2">${stageData.title}</h3>
+                    <p class="text-gray-700 leading-relaxed">${stageData.description}</p>
+                </div>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6" id="tool-grid">
+                    ${toolsHtml}
+                </div>
+                <div id="tool-details" class="bg-gray-100 p-6 rounded-lg min-h-[100px] smooth-transition">
+                     <p class="text-center text-gray-500">Click on a tool or command above to see details.</p>
+                </div>
+            `;
+            
+            document.querySelectorAll('.tool-card').forEach(card => {
+                card.addEventListener('click', handleToolClick);
+            });
+        }
+        
+        function handleToolClick(event) {
+            const card = event.currentTarget;
+            const stageKey = card.dataset.stage;
+            const toolIndex = card.dataset.toolIndex;
+            const toolData = contentData[stageKey].tools[toolIndex];
+            
+            const toolDetailsEl = document.getElementById('tool-details');
+            toolDetailsEl.innerHTML = `
+                <h4 class="font-bold text-xl mb-2 text-gray-900">${toolData.name}</h4>
+                <p class="text-gray-800 mb-4">${toolData.details}</p>
+                <div class="flex justify-between items-center">
+                    <p class="font-mono text-sm bg-white p-3 rounded-md shadow-sm">${toolData.command}</p>
+                    <span class="font-semibold text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-full">Chapter: ${toolData.chapter}</span>
+                </div>
+            `;
+
+            if (activeToolCard) {
+                activeToolCard.classList.remove('active');
+            }
+            card.classList.add('active');
+            activeToolCard = card;
+        }
+
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                const stage = e.currentTarget.dataset.stage;
+                
+                navItems.forEach(nav => nav.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                
+                stageContentEl.style.opacity = 0;
+                setTimeout(() => {
+                    displayStageContent(stage);
+                    stageContentEl.style.opacity = 1;
+                }, 300);
+            });
+        });
+
+        function createChart() {
+            const ctx = document.getElementById('toolkit-chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Foundations', 'Recon', 'Scanning', 'Access', 'Persistence', 'Covering Tracks', 'Scripting'],
+                    datasets: [{
+                        label: 'Key Skills/Tools',
+                        data: [6, 4, 3, 5, 2, 4, 3],
+                        backgroundColor: [
+                            '#6B7280', // Gray
+                            '#3B82F6', // Blue
+                            '#F59E0B', // Amber
+                            '#EF4444', // Red
+                            '#8B5CF6', // Violet
+                            '#10B981', // Emerald
+                            '#EC4899'  // Pink
+                        ],
+                        borderColor: '#FFFFFF',
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    size: 14,
+                                    family: 'Inter'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed + ' Key Areas';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            displayStageContent('foundations');
+            document.querySelector('.nav-item[data-stage="foundations"]').classList.add('active');
+            createChart();
+        });
+    </script>
+</body>
+</html>
