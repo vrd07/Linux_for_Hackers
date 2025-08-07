@@ -381,26 +381,22 @@
             geminiSpinner.style.display = 'flex';
             geminiModal.style.display = 'flex';
 
-            const apiKey = ""; // API key will be injected by the environment
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            // This URL points to your Netlify Function, which acts as a secure proxy.
+            const apiUrl = '/.netlify/functions/explain';
             
-            const payload = {
-                contents: [{
-                    parts: [{ text: prompt }]
-                }]
-            };
-
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    // Send the prompt in the request body to your Netlify Function.
+                    body: JSON.stringify({ prompt: prompt })
                 });
 
                 if (!response.ok) {
                     throw new Error(`API request failed with status ${response.status}`);
                 }
 
+                // The response from your function is the direct response from the Gemini API.
                 const result = await response.json();
                 
                 if (result.candidates && result.candidates.length > 0) {
@@ -416,7 +412,7 @@
                 }
 
             } catch (error) {
-                console.error("Gemini API call failed:", error);
+                console.error("API call failed:", error);
                 geminiResponseEl.textContent = 'An error occurred while fetching the explanation. Please check the console for details.';
             } finally {
                 geminiSpinner.style.display = 'none';
@@ -439,5 +435,6 @@
             createChart();
         });
     </script>
+
 </body>
 </html>
